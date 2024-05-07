@@ -21,8 +21,8 @@ class Situation:
         self.Time = 0
         self.n_agents = JobNum
         self.n_actions = MachNum + 3
-        self.C = 100
-        self.Cup = 150
+        self.C = 500
+        self.Cup = 500
         self.Usage = 1
 
     def scheduling(self,actions):
@@ -98,11 +98,11 @@ class Situation:
             for i in range(self.JobNum):
                 if len(jobs[i].Start) >= self.JobOpNum[i] or (jobs[i].is_idle(ti) == 0):
                     continue
-                machNum,valNum = -1, 0
+                machNum,valNum = -1, 10000
                 for j in range(self.MachNum):
                     if machines[j].is_idle(ti) == 0:
                         continue
-                    if valNum < self.ProcessingTime[i][len(jobs[i].Start)][j]:
+                    if valNum > self.ProcessingTime[i][len(jobs[i].Start)][j]:
                         machNum, valNum = j, self.ProcessingTime[i][len(jobs[i].Start)][j]
                 if machNum != -1:
                     jobs[i]._add(ti,ti + valNum,machNum)
@@ -115,6 +115,39 @@ class Situation:
             # print("")
         # print(f"{ti}")
         return ti
+
+    def guess_fin_random(self):
+        machines = deepcopy(self.Machines)
+        jobs = deepcopy(self.Jobs)
+        ti = self.Time
+        while True:
+            fin = True
+            for i in range(self.JobNum):
+                if len(jobs[i].Start) < self.JobOpNum[i]:
+                    fin = False
+            if fin:
+                break
+            for i in range(self.JobNum):
+                if len(jobs[i].Start) >= self.JobOpNum[i] or (jobs[i].is_idle(ti) == 0):
+                    continue
+                machNum, valNum = -1, 10000
+                for j in range(self.MachNum):
+                    if machines[j].is_idle(ti) == 0:
+                        continue
+                    if valNum > self.ProcessingTime[i][len(jobs[i].Start)][j]:
+                        machNum, valNum = j, self.ProcessingTime[i][len(jobs[i].Start)][j]
+                if machNum != -1:
+                    jobs[i]._add(ti, ti + valNum, machNum)
+                    machines[machNum]._add(ti, ti + valNum, i)
+            ti += 1
+        for i in range(self.JobNum):
+            for j in range(len(jobs[i].Start)):
+                # print(f"{jobs[i].Start[j]} {jobs[i].End[j]} {jobs[i].AssignFor[j]} / ",end = "")
+                ti = max(ti, jobs[i].End[j])
+            # print("")
+        # print(f"{ti}")
+        return ti
+
 
 
     def machine_usage(self):
@@ -136,7 +169,7 @@ class Situation:
             i.reset()
         for i in self.Jobs:
             i.reset()
-        self.C = 100
+        self.C = 500
 
     def get_avail_agent_actions(self,ID):
         State = np.zeros(self.n_actions)
@@ -167,7 +200,7 @@ class Situation:
         n_agents = self.JobNum
         state_shape = (2 * self.JobNum + self.MachNum) * self.MachNum
         obs_shape = self.MachNum
-        episode_limit = 1000
+        episode_limit = 2000
         info = dict(n_actions=n_actions,
                     n_agents=n_agents,
                     state_shape=state_shape,

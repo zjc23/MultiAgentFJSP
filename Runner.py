@@ -15,8 +15,12 @@ class Runner:
             self.buffer = ReplayBuffer(args)
         """
         self.args = args
-        self.average_spend_times = []
+        self.spend_times = []
         self.episode_rewards = []
+        self.total_spend_times = 0
+        self.total_rewards = 0
+        self.average_spend_times = []
+        self.average_rewards = []
 
         # 用来保存plt和pkl
         self.save_path = self.args.result_dir
@@ -28,11 +32,15 @@ class Runner:
         while time_steps < self.args.n_steps:
             print('Run {}, time_steps {}'.format(num, time_steps))
             if time_steps // self.args.evaluate_cycle > evaluate_steps:
-                average_spend_time, episode_reward = self.evaluate()
-                print(f'average_spend_time is {average_spend_time}')
+                spend_time, episode_reward = self.evaluate()
+                print(f'spend_time is {spend_time}')
                 print(f'episode_reward is {episode_reward}')
-                self.average_spend_times.append(average_spend_time)
+                self.spend_times.append(spend_time)
+                self.total_spend_times += spend_time
+                self.average_spend_times.append(self.total_spend_times / len(self.spend_times))
                 self.episode_rewards.append(episode_reward)
+                self.total_rewards += episode_reward
+                self.average_rewards.append(self.total_rewards / len(self.episode_rewards))
                 self.plt(num)
                 evaluate_steps += 1
             episodes = []
@@ -50,38 +58,48 @@ class Runner:
                     episode_batch[key] = np.concatenate((episode_batch[key], episode[key]), axis=0)
             self.agents.train(episode_batch, train_steps, self.rolloutWorker.epsilon)
             train_steps += 1
-        average_spend_time, episode_reward = self.evaluate()
-        print('average_spend_time is ', average_spend_time)
-        self.average_spend_times.append(average_spend_time)
+        spend_time, episode_reward = self.evaluate()
+        print(f'spend_time is {spend_time}')
+        self.spend_times.append(spend_time)
+        self.total_spend_times += spend_time
+        self.average_spend_times.append(self.total_spend_times / len(self.spend_times))
         self.episode_rewards.append(episode_reward)
+        self.total_rewards += episode_reward
+        self.average_rewards.append(self.total_rewards / len(self.episode_rewards))
         self.plt(num)
 
     def evaluate(self):
-        spend_time = 0
-        episode_rewards = 0
-        for epoch in range(self.args.evaluate_epoch):
-            _, episode_reward, time = self.rolloutWorker.generate_episode(epoch, evaluate=True)
-            episode_rewards += episode_reward
-            spend_time += time
-        return spend_time / self.args.evaluate_epoch, episode_rewards / self.args.evaluate_epoch
+        _, episode_reward, time = self.rolloutWorker.generate_episode(0, evaluate=True)
+        return time, episode_reward
 
     def plt(self, num):
         plt.figure()
-        plt.cla()
-        plt.subplot(2, 1, 1)
-        plt.plot(range(len(self.average_spend_times)), self.average_spend_times)
+        plt.plot(range(len(self.spend_times)), self.spend_times)
         plt.xlabel('step*{}'.format(self.args.evaluate_cycle))
-        plt.ylabel('average_spend_time')
+        plt.ylabel('spend_time')
+        plt.savefig(self.save_path + '/plt_time.png', format='png')
 
-        plt.subplot(2, 1, 2)
+        plt.clf()
         plt.plot(range(len(self.episode_rewards)), self.episode_rewards)
         plt.xlabel('step*{}'.format(self.args.evaluate_cycle))
         plt.ylabel('episode_rewards')
+        plt.savefig(self.save_path + '/plt_reward.png', format='png')
 
-        plt.tight_layout()
-        plt.savefig(self.save_path + '/plt_{}.png'.format(num), format='png')
-        np.save(self.save_path + '/win_rates_{}'.format(num), self.average_spend_times)
-        np.save(self.save_path + '/episode_rewards_{}'.format(num), self.episode_rewards)
+        plt.clf()
+        plt.plot(range(len(self.average_rewards)), self.average_rewards)
+        plt.xlabel('step*{}'.format(self.args.evaluate_cycle))
+        plt.ylabel('average_rewards')
+        plt.savefig(self.save_path + '/plt_average_reward.png', format='png')
+
+        plt.clf()
+        plt.plot(range(len(self.average_spend_times)), self.average_spend_times)
+        plt.xlabel('step*{}'.format(self.args.evaluate_cycle))
+        plt.ylabel('average_times')
+        plt.savefig(self.save_path + '/plt_average_time.png', format='png')
+        print("?")
+
+        # np.save(self.save_path + '/win_rates_{}'.format(num), self.average_spend_times)
+        # np.save(self.save_path + '/episode_rewards_{}'.format(num), self.episode_rewards)
         plt.close()
 
 

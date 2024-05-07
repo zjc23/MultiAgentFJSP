@@ -29,7 +29,7 @@ def random_env():
     for i in range(JobNum):
         for j in range(JobOpNum[i]):
             for k in range(MachineNum):
-                ProcessingTime[i][j][k] = random.randint(2, 10)
+                ProcessingTime[i][j][k] = random.randint(2, 50)
     ret = Situation(JobNum, MachineNum, JobOpNum, ProcessingTime)
     # writefile(JobNum,MachineNum,JobOpNum,ProcessingTime)
     return ret

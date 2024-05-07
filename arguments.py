@@ -15,14 +15,14 @@ def get_common_args():
     parser.add_argument('--reuse_network', type=bool, default=True, help='whether to use one network for all agents')
     parser.add_argument('--gamma', type=float, default=0.99, help='discount factor')
     parser.add_argument('--optimizer', type=str, default="RMS", help='optimizer')
-    parser.add_argument('--evaluate_cycle', type=int, default=5000, help='how often to evaluate the model')
+    parser.add_argument('--evaluate_cycle', type=int, default=500, help='how often to evaluate the model')
     parser.add_argument('--evaluate_epoch', type=int, default=32, help='number of the epoch to evaluate the agent')
     parser.add_argument('--model_dir', type=str, default='./model', help='model directory of the policy')
     parser.add_argument('--result_dir', type=str, default='./result', help='result directory of the policy')
     parser.add_argument('--load_model', type=bool, default=False, help='whether to load the pretrained model')
     parser.add_argument('--evaluate', type=bool, default=False, help='whether to evaluate the model')
-    parser.add_argument('--cuda', type=bool, default=True, help='whether to use the GPU')
-    parser.add_argument('--data',type=bool,default=True, help='whether to use static data')
+    parser.add_argument('--cuda', type=bool, default=False, help='whether to use the GPU')
+    parser.add_argument('--data',type=bool,default=False, help='whether to use static data')
     args = parser.parse_args()
     return args
 

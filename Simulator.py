@@ -71,7 +71,7 @@ class RolloutWorker:
                 # print(f"qval:{qval} act:{act} agent:{agent}")
                 if actions[agent] != -1:
                     continue
-                if act == self.args.n_actions - 3 or (actions[agent] == -1 and (act not in actions)):
+                if act != self.args.n_actions - 3 and (actions[agent] == -1 and (act not in actions)):
                     actions[agent] = act
             # 处理探索
             for i in range(self.args.n_agents):
@@ -83,6 +83,8 @@ class RolloutWorker:
                     avail_action_ind = np.nonzero(avail_action)[0]
                     act = np.random.choice(avail_action_ind)
                     actions[i] = act
+                elif actions[i] == -1:
+                    actions[i] = self.args.n_actions - 3
             # 记录数据
             for i in range(self.args.n_agents):
                 action_onehot = np.zeros(self.args.n_actions)
